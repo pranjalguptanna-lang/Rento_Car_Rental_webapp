@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rento - Zoomcar Style AI Self-Drive Car Rentals & Host Listing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-card: #131b2e;
+      --bg-card-hover: #1c2742;
+      --primary: #10b981; /* Zoomcar signature vibrant green accent */
+      --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+      --accent-blue: #6366f1;
+      --accent-ev: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --glass-bg: rgba(19, 27, 46, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(99, 102, 241, 0.10) 0%, transparent 40%);
+    }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2.5rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: var(--primary-gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .brand-text {
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn {
+      padding: 0.65rem 1.3rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-accent:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.45);
+    }
+
+    /* Page View Containers */
+    .page-section { display: none; padding: 2.5rem 1.5rem 4rem 1.5rem; max-width: 1240px; margin: 0 auto; }
+    .page-section.active { display: block; animation: fadeIn 0.35s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Multi-step progress tracker */
+    .step-bar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      padding: 1rem;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .step-item.active {
+      color: var(--primary);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .step-item.active .step-num {
+      background: var(--primary);
+      color: white;
+    }
+
+    .step-divider {
+      width: 40px;
+      height: 2px;
+      background: var(--glass-border);
+    }
+
+    /* Zoomcar Hero */
+    .hero {
+      text-align: center;
+      padding: 3.5rem 1rem 2.5rem 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      color: #34d399;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+    /* Search Bar */
+    .main-search-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
+      gap: 1rem;
+      align-items: end;
+      margin-bottom: 3rem;
+    }
+
+    .search-field { text-align: left; }
+    .search-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      background: var(--bg-dark);
+      border: 1px solid var(--glass-border);
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.75rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .feature-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .feature-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* Cars Grid */
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .car-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .car-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .car-img-placeholder {
+      height: 170px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+    }
+
+    .badge-tag {
+      position: absolute;
+      top: 12px; right: 12px;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-ev { background: rgba(6, 182, 212, 0.25); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.5); }
+    .badge-gas { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
+
+    .car-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; }
+    .car-title { font-size: 1.2rem; font-weight: 700; }
+    .car-price { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+
+    /* Footer */
+    footer {
+      background: var(--glass-bg);
+      border-top: 1px solid var(--glass-border);
+      padding: 3rem 2.5rem 1.5rem 2.5rem;
+      margin-top: 4rem;
+    }
+
+    .footer-grid {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-col h4 { font-size: 1rem; font-weight: 700; margin-bottom: 1.2rem; color: white; }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+    .footer-col li:hover { color: white; }
+
+    .footer-bottom {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Responsive Navbar -->
+  <nav>
+    <div class="brand" onclick="navigateTo('/')">
+      <div class="brand-logo">🚗</div>
+      <span class="brand-text">RENTO</span>
+    </div>
+
+    <div class="nav-links">
+      <span class="nav-link active" onclick="navigateTo('/')">Home</span>
+      <span class="nav-link" onclick="navigateTo('/renter/cars')">Rent a Car</span>
+      <span class="nav-link" onclick="navigateTo('/lister/add-vehicle')">Become a Host</span>
+      <span class="nav-link" onclick="navigateTo('/ai-match')">AI Car Match</span>
+      <span class="nav-link" onclick="navigateTo('/ev-planner')">EV Planner</span>
+      <span class="nav-link" onclick="navigateTo('/how-it-works')">How It Works</span>
+
+      <button class="btn btn-outline" id="authBtnLogin" onclick="navigateTo('/login')">Login</button>
+      <button class="btn btn-primary" id="authBtnRegister" onclick="navigateTo('/register')">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- PAGE 1: RENTER & LISTER HOME LANDING PAGE -->
+  <section id="page-landing" class="page-section active">
+    <div class="hero">
+      <div class="hero-badge">⚡ Self-Drive Car Rentals & Host Fleet Platform</div>
+      <h1>Drive the Freedom with Zoomcar-Style Ease</h1>
+      <p>Whether you want to rent a premium car for your journey or list your car to earn passive income with AI weekly revenue forecasting, Rento has you covered.</p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2.5rem; text-align: left;">
+        <!-- Pathway 1: Rent a Car -->
+        <div style="background: var(--bg-card); border: 2px solid var(--primary); border-radius: 20px; padding: 2rem; position: relative; overflow: hidden;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">RENTER WORKFLOW</div>
+          <h2 style="font-size: 1.8rem; margin: 0.5rem 0 1rem 0;">I Want to Rent a Car</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Explore our self-drive cars, filter by your requirements (seats, EV, pricing), and get instant auto-approved invoice billing.</p>
+          <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.9rem;" onclick="navigateTo('/renter/cars')">Start Booking Flow (Step 1 → Step 2 → Step 3) →</button>
+        </div>
+
+        <!-- Pathway 2: List Your Car -->
+        <div style="background: var(--bg-card); border: 2px solid var(--accent-blue); border-radius: 20px; padding: 2rem; position: relative; overflow: hidden;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase;">HOST LISTER WORKFLOW</div>
+          <h2 style="font-size: 1.8rem; margin: 0.5rem 0 1rem 0;">I Want to List My Car</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Enter your car specifications, get an immediate weekly income AI approximation, and submit for live fleet listing.</p>
+          <button class="btn btn-accent" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.9rem;" onclick="navigateTo('/lister/add-vehicle')">Start Host Listing Flow (Step 1 → Step 2 → Step 3) →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Highlights Grid -->
+    <h2 style="text-align: center; font-size: 2rem; margin: 3rem 0 0.5rem 0;">Why Rent & List on Rento</h2>
+    <p style="text-align: center; color: var(--text-muted); margin-bottom: 2.5rem;">Key features inspired by modern mobility platforms</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚗</div>
+        <h3>Keyless Self-Drive Access</h3>
+        <p>Unlock cars directly through smart telematics and start driving immediately with zero key transfer delays.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>AI Earnings Estimator</h3>
+        <p>Hosts receive real-time weekly revenue forecasts derived from localized demand surge and occupancy algorithms.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Zero-Emission EV Routing</h3>
+        <p>Integrated electric vehicle range guidance and automated fast-charger routing for stress-free zero-emission trips.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RENTER FLOW - STEP 2: SEARCH & SELECT CAR PAGE (/renter/cars) -->
+  <section id="page-renter-cars" class="page-section">
+    <div class="step-bar-container">
+      <div class="step-item active"><div class="step-num">1</div> Landing Page</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">2</div> Choose & Select Car</div>
+      <div class="step-divider"></div>
+      <div class="step-item"><div class="step-num">3</div> Search Requirements & Trip Specs</div>
+      <div class="step-divider"></div>
+      <div class="step-item"><div class="step-num">4</div> Invoice & Booking Billing</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <h2 style="font-size: 2rem; font-weight: 700;">Select a Car for Your Journey</h2>
+        <p style="color: var(--text-muted);">Choose from available cars below to proceed to trip customization.</p>
+      </div>
+      <button class="btn btn-outline" onclick="navigateTo('/')">← Back to Landing</button>
+    </div>
+
+    <div class="vehicle-grid" id="renterCarsGrid"></div>
+  </section>
+
+  <!-- RENTER FLOW - STEP 3: SEARCH REQUIREMENTS & CUSTOMIZATION (/renter/requirements) -->
+  <section id="page-renter-requirements" class="page-section">
+    <div class="step-bar-container">
+      <div class="step-item active"><div class="step-num">1</div> Landing Page</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">2</div> Choose & Select Car</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">3</div> Search Requirements & Trip Specs</div>
+      <div class="step-divider"></div>
+      <div class="step-item"><div class="step-num">4</div> Invoice & Booking Billing</div>
+    </div>
+
+    <div style="max-width: 700px; margin: 0 auto;" class="feature-card">
+      <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Configure Your Trip Requirements</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Customize dates, time slots, protection plans, and extra options.</p>
+
+      <div id="selectedCarBanner" style="background: var(--bg-dark); border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;"></div>
+
+      <div className="filter-group">
+        <label>Pickup Location & City</label>
+        <input type="text" id="reqLocation" value="San Francisco Airport Hub" />
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div className="filter-group">
+          <label>Pickup Date & Time Slot</label>
+          <input type="datetime-local" id="reqPickupTime" value="2026-10-01T10:00" />
+        </div>
+        <div className="filter-group">
+          <label>Return Date & Time Slot</label>
+          <input type="datetime-local" id="reqReturnTime" value="2026-10-03T10:00" />
+        </div>
+      </div>
+
+      <div className="filter-group" style="margin-top: 1rem;">
+        <label>Damage Protection Plan</label>
+        <select id="reqProtection">
+          <option value="standard">Standard Protection (Zero Security Deposit)</option>
+          <option value="premium">Premium Full Coverage ($15 / day)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem;">
+        <button class="btn btn-outline" onclick="navigateTo('/renter/cars')">← Back to Cars</button>
+        <button class="btn btn-primary" onclick="proceedToInvoiceBilling()">Proceed to Invoice & Billing →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RENTER FLOW - STEP 4: INVOICE & BILLING SUMMARY (/renter/invoice) -->
+  <section id="page-renter-invoice" class="page-section">
+    <div class="step-bar-container">
+      <div class="step-item active"><div class="step-num">1</div> Landing Page</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">2</div> Choose & Select Car</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">3</div> Search Requirements & Trip Specs</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">4</div> Invoice & Booking Billing</div>
+    </div>
+
+    <div style="max-width: 650px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+        <div>
+          <h2 style="font-size: 1.8rem; font-weight: 800;">Booking Invoice</h2>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Invoice ID: #INV-2026-8891</span>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 0.4rem 0.8rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">AUTO-APPROVED</div>
+      </div>
+
+      <div id="invoiceContentDetails" style="margin-bottom: 2rem;"></div>
+
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 1rem;" onclick="confirmPayAndFinish()">Pay & Complete Reservation 🎉</button>
+    </div>
+  </section>
+
+  <!-- LISTER FLOW - STEP 2: ENTER CAR DETAILS & AI INCOME ESTIMATE (/lister/add-vehicle) -->
+  <section id="page-lister-add" class="page-section">
+    <div class="step-bar-container">
+      <div class="step-item active"><div class="step-num">1</div> Landing Page</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">2</div> Car Details & AI Forecast</div>
+      <div class="step-divider"></div>
+      <div class="step-item"><div class="step-num">3</div> Review & Live Fleet Confirmation</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="feature-card">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.25rem;">Enter Car Specifications</h2>
+        <form onsubmit="handleListerFormSubmit(event)">
+          <div className="filter-group"><label>Car Brand / Make</label><input type="text" id="listerMake" value="Tesla" required /></div>
+          <div className="filter-group"><label>Vehicle Model</label><input type="text" id="listerModel" value="Model Y" required /></div>
+          <div className="filter-group">
+            <label>Fuel / Powertrain Type</label>
+            <select id="listerIsEv" onchange="updateListerEstimate()"><option value="true">Electric (EV)</option><option value="false">Gasoline / Hybrid</option></select>
+          </div>
+          <div className="filter-group"><label>Expected Daily Base Rate ($)</label><input type="number" id="listerDailyRate" value="125" required oninput="updateListerEstimate()" /></div>
+          <div className="filter-group"><label>City Hub Location</label><input type="text" id="listerLocation" value="San Francisco" required /></div>
+          <button type="submit" class="btn btn-accent" style="width: 100%; justify-content: center; margin-top: 1.5rem;">Submit Details & View Listing Confirmation →</button>
+        </form>
+      </div>
+
+      <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(99, 102, 241, 0.12)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px; padding: 2.5rem; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 0.85rem; font-weight: 700; color: #34d399; text-transform: uppercase;">🤖 AI Weekly Income Approximation</div>
+        <div style="font-size: 3.5rem; font-weight: 800; color: #34d399; margin: 1.25rem 0;" id="listerIncomeDisplay">$700 - $933</div>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">Estimated weekly income calculated using AI dynamic surge demand multipliers and 80% market occupancy assumption.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LISTER FLOW - STEP 3: REDIRECTED LISTING CONFIRMATION (/lister/confirmation) -->
+  <section id="page-lister-confirm" class="page-section">
+    <div class="step-bar-container">
+      <div class="step-item active"><div class="step-num">1</div> Landing Page</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">2</div> Car Details & AI Forecast</div>
+      <div class="step-divider"></div>
+      <div class="step-item active"><div class="step-num">3</div> Review & Live Fleet Confirmation</div>
+    </div>
+
+    <div style="max-width: 600px; margin: 2rem auto; text-align: center; background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 20px; padding: 3rem;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+      <h2 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem;">Vehicle Successfully Listed!</h2>
+      <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem;">Your vehicle has been verified by AI inspection and is now active on the Rento search catalogue.</p>
+      <div id="listerSummaryCard" style="background: var(--bg-dark); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); text-align: left; margin-bottom: 2rem;"></div>
+
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 0.9rem;" onclick="navigateTo('/renter/cars')">View Your Car in Public Fleet Catalogue →</button>
+    </div>
+  </section>
+
+  <!-- PAGE: AI MATCH -->
+  <section id="page-ai-match" class="page-section">
+    <div class="hero" style="padding-top: 1rem;">
+      <h2>AI Natural Language Vehicle Recommendation</h2>
+      <p>Tell us your exact trip needs in plain text.</p>
+      <div style="display: flex; gap: 1rem; max-width: 650px; margin: 1.5rem auto 0 auto;">
+        <input type="text" id="aiMatchInputPrompt" value="I need an SUV or EV for 5 people for a weekend trip under $120 per day" />
+        <button class="btn btn-primary" onclick="runAiRecommendation()">Find AI Matches</button>
+      </div>
+    </div>
+    <div id="aiMatchResultsContainer"></div>
+  </section>
+
+  <!-- PAGE: EV PLANNER -->
+  <section id="page-ev-planner" class="page-section">
+    <div class="hero" style="padding-top: 1rem;">
+      <h2>⚡ EV Range & Charging Intelligence</h2>
+      <p>Plan long-distance zero-emission trips seamlessly.</p>
+    </div>
+    <div style="background: var(--bg-card); border: 1px solid var(--glass-border); padding: 2rem; border-radius: 20px; max-width: 600px; margin: 0 auto;">
+      <div className="filter-group"><label>Trip Distance (Miles)</label><input type="number" id="evPlannerDistance" value="280" /></div>
+      <div className="filter-group"><label>Current Charge (%)</label><input type="number" id="evPlannerCharge" value="90" /></div>
+      <button class="btn btn-accent" style="width: 100%; justify-content: center; margin-top: 1rem;" onclick="evaluateEvRoute()">Calculate Route & Charging Stops →</button>
+      <div id="evPlannerOutput" style="margin-top: 1.5rem;"></div>
+    </div>
+  </section>
+
+  <!-- AUTH PAGES -->
+  <section id="page-login" class="page-section">
+    <div style="max-width: 420px; margin: 2rem auto; background: var(--bg-card); border: 1px solid var(--glass-border); padding: 2rem; border-radius: 16px;">
+      <h2 style="text-align: center; margin-bottom: 1.5rem;">Login to Rento</h2>
+      <form onsubmit="handleAuthLogin(event)">
+        <div className="filter-group"><label>Email</label><input type="email" id="loginEmail" value="renter1@rento.com" required /></div>
+        <div className="filter-group"><label>Password</label><input type="password" id="loginPass" value="password123" required /></div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">Login</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="page-register" class="page-section">
+    <div style="max-width: 420px; margin: 2rem auto; background: var(--bg-card); border: 1px solid var(--glass-border); padding: 2rem; border-radius: 16px;">
+      <h2 style="text-align: center; margin-bottom: 1.5rem;">Register Account</h2>
+      <form onsubmit="handleAuthRegister(event)">
+        <div className="filter-group"><label>Email</label><input type="email" id="regEmail" required /></div>
+        <div className="filter-group"><label>Password</label><input type="password" id="regPass" required /></div>
+        <button type="submit" class="btn btn-accent" style="width: 100%; justify-content: center; margin-top: 1rem;">Register</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="page-how-it-works" class="page-section">
+    <div class="hero" style="padding-top: 1rem;">
+      <h2>How Rento Multi-Step Workflows Work</h2>
+      <p>Select your role from the landing page and follow the smooth step-by-step redirections.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="brand" style="margin-bottom: 1rem;">
+          <div class="brand-logo">🚗</div>
+          <span class="brand-text">RENTO</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Zoomcar-Style Self-Drive Car Rental & Host Income Forecasting Platform.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    let allFleet = [];
+    let selectedCarForBooking = null;
+    let currentListerVehicle = null;
+
+    function navigateTo(route) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+      let targetId = 'page-landing';
+      if (route === '/' || route === '') targetId = 'page-landing';
+      else if (route === '/renter/cars') { targetId = 'page-renter-cars'; loadRenterCars(); }
+      else if (route === '/renter/requirements') targetId = 'page-renter-requirements';
+      else if (route === '/renter/invoice') targetId = 'page-renter-invoice';
+      else if (route === '/lister/add-vehicle') targetId = 'page-lister-add';
+      else if (route === '/lister/confirmation') targetId = 'page-lister-confirm';
+      else if (route === '/ai-match') targetId = 'page-ai-match';
+      else if (route === '/ev-planner') targetId = 'page-ev-planner';
+      else if (route === '/login') targetId = 'page-login';
+      else if (route === '/register') targetId = 'page-register';
+      else if (route === '/how-it-works') targetId = 'page-how-it-works';
+
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) targetEl.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function loadRenterCars() {
+      try {
+        const carImages = [
+          { make: "Tesla", model: "Model Y Long Range", price: 120, is_ev: true, health: 98, img: "/static/images/tesla_model_y_1790599521260.png" },
+          { make: "BMW", model: "M4 Competition Coupe", price: 175, is_ev: false, health: 95, img: "/static/images/bmw_m4_coupe_1790599567232.png" },
+          { make: "Porsche", model: "Taycan Turbo S", price: 220, is_ev: true, health: 99, img: "/static/images/porsche_taycan_ev_1790599615578.png" },
+          { make: "Audi", model: "RS7 Sportback", price: 195, is_ev: false, health: 94, img: "/static/images/audi_rs7_sportback_1790599665584.png" },
+          { make: "Mercedes-AMG", model: "G63 G-Wagon", price: 250, is_ev: false, health: 96, img: "/static/images/mercedes_g_wagon_1790599799615.png" }
+        ];
+
+        let fleetData = [];
+        try {
+          const res = await fetch(`${API_BASE}/vehicles`);
+          const apiCars = await res.json();
+          fleetData = apiCars.map((v, i) => ({
+            ...v,
+            make: carImages[i % carImages.length].make,
+            model: carImages[i % carImages.length].model,
+            price_per_day: carImages[i % carImages.length].price,
+            is_ev: carImages[i % carImages.length].is_ev,
+            health_score: carImages[i % carImages.length].health,
+            image_url: carImages[i % carImages.length].img
+          }));
+        } catch(e) {
+          fleetData = carImages.map((c, idx) => ({ id: idx + 1, make: c.make, model: c.model, price_per_day: c.price, is_ev: c.is_ev, health_score: c.health, image_url: c.img }));
+        }
+
+        allFleet = fleetData;
+        const grid = document.getElementById('renterCarsGrid');
+        grid.innerHTML = allFleet.map(v => `
+          <div class="car-card">
+            <div style="height: 180px; overflow: hidden; position: relative; background: #0f172a;">
+              <img src="${v.image_url}" alt="${v.make} ${v.model}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1.0)'" />
+              <span class="badge-tag ${v.is_ev ? 'badge-ev' : 'badge-gas'}">${v.is_ev ? 'EV Electric' : 'Gasoline'}</span>
+            </div>
+            <div class="car-body">
+              <div>
+                <div class="car-title">${v.make} ${v.model}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">Health Rating: <strong style="color:#34d399">${v.health_score || 100}/100</strong></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="car-price">$${v.price_per_day}<span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;"> / day</span></div>
+                <button class="btn btn-primary" onclick="selectCarAndRedirectToReq(${v.id})">Select Car →</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) { console.error(e); }
+    }
+
+    function selectCarAndRedirectToReq(carId) {
+      const car = allFleet.find(v => v.id === carId);
+      if (!car) return;
+      selectedCarForBooking = car;
+      document.getElementById('selectedCarBanner').innerHTML = `
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 700;">Selected Vehicle: ${car.make} ${car.model}</h3>
+          <span style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">Daily Rate: $${car.price_per_day} / day</span>
+        </div>
+        <span class="badge-tag ${car.is_ev ? 'badge-ev' : 'badge-gas'}" style="position: relative; top: 0; right: 0;">${car.is_ev ? 'EV Electric' : 'Gasoline'}</span>
+      `;
+      navigateTo('/renter/requirements');
+    }
+
+    function proceedToInvoiceBilling() {
+      if (!selectedCarForBooking) return alert("Please select a car first");
+      const location = document.getElementById('reqLocation').value;
+      const pickup = document.getElementById('reqPickupTime').value;
+      const ret = document.getElementById('reqReturnTime').value;
+      const totalDays = 2;
+      const totalAmount = selectedCarForBooking.price_per_day * totalDays;
+
+      document.getElementById('invoiceContentDetails').innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;"><span>Vehicle Reserved:</span><strong>${selectedCarForBooking.make} ${selectedCarForBooking.model}</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;"><span>Pickup Location:</span><strong>${location}</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;"><span>Rental Duration:</span><strong>2 Days (${pickup.split('T')[0]} to ${ret.split('T')[0]})</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;"><span>Daily Base Rate:</span><strong>$${selectedCarForBooking.price_per_day} / day</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;"><span>Insurance & Taxes:</span><strong>Included ($0)</strong></div>
+        <div style="border-top: 1px dashed var(--glass-border); padding-top: 1rem; margin-top: 1rem; display: flex; justify-content: space-between; font-size: 1.4rem; font-weight: 800; color: var(--primary);">
+          <span>Total Final Payable:</span>
+          <span>$${totalAmount}</span>
+        </div>
+      `;
+      navigateTo('/renter/invoice');
+    }
+
+    function confirmPayAndFinish() {
+      alert("🎉 Payment Successful! Your self-drive car rental reservation is confirmed.");
+      navigateTo('/');
+    }
+
+    function updateListerEstimate() {
+      const rate = parseFloat(document.getElementById('listerDailyRate').value) || 100;
+      const low = Math.round(rate * 7 * 0.8);
+      const high = Math.round(rate * 7 * 1.05);
+      document.getElementById('listerIncomeDisplay').innerText = `$${low} - $${high}`;
+    }
+
+    function handleListerFormSubmit(e) {
+      e.preventDefault();
+      const make = document.getElementById('listerMake').value;
+      const model = document.getElementById('listerModel').value;
+      const rate = document.getElementById('listerDailyRate').value;
+      const location = document.getElementById('listerLocation').value;
+
+      document.getElementById('listerSummaryCard').innerHTML = `
+        <p style="margin-bottom: 0.5rem;"><strong>Vehicle:</strong> ${make} ${model}</p>
+        <p style="margin-bottom: 0.5rem;"><strong>Listed Base Rate:</strong> $${rate} / day</p>
+        <p style="margin-bottom: 0.5rem;"><strong>Hub Location:</strong> ${location}</p>
+        <p style="color: #34d399;"><strong>Status:</strong> Live on Rento Platform</p>
+      `;
+      navigateTo('/lister/confirmation');
+    }
+
+    async function runAiRecommendation() {
+      const q = document.getElementById('aiMatchInputPrompt').value;
+      const res = await fetch(`${API_BASE}/vehicles/search/match?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      document.getElementById('aiMatchResultsContainer').innerHTML = `
+        <div class="vehicle-grid" style="margin-top: 1.5rem;">
+          ${data.matches.map(m => `
+            <div class="car-card"><div class="car-body">
+              <div>Match Score: ${m.relevance_score}%</div>
+              <div class="car-title">${m.make} ${m.model}</div>
+              <button class="btn btn-primary" onclick="selectCarAndRedirectToReq(${m.vehicle_id})">Select Car →</button>
+            </div></div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    async function evaluateEvRoute() {
+      const dist = document.getElementById('evPlannerDistance').value;
+      const charge = document.getElementById('evPlannerCharge').value;
+      const res = await fetch(`${API_BASE}/vehicles/1/ev-guidance?trip_distance_miles=${dist}&current_charge_pct=${charge}`);
+      const data = await res.json();
+      document.getElementById('evPlannerOutput').innerHTML = `<p>${data.guidance_message}</p>`;
+    }
+
+    async function handleAuthLogin(e) {
+      e.preventDefault();
+      alert("Login successful!");
+      navigateTo('/');
+    }
+
+    async function handleAuthRegister(e) {
+      e.preventDefault();
+      alert("Registration successful!");
+      navigateTo('/login');
+    }
+  </script>
+</body>
+</html>
